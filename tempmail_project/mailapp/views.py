@@ -6,11 +6,11 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import EmailAccount, EmailMessage
 
 def generate_random_email():
-    """Generate a random email address using a fixed domain."""
+    """Generate a random email address using your Mailgun sandbox domain."""
     random_str = ''.join(random.choices(string.ascii_lowercase + string.digits, k=10))
-    domain = "tempmail.local"
+    # Replace the domain with your Mailgun sandbox domain:
+    domain = "sandbox9d18f8abf14e4fbf8241fbb4e2b86787.mailgun.org"
     return f"{random_str}@{domain}"
-
 def index(request):
     """
     The home view: If there is no temporary email in session, create one.
