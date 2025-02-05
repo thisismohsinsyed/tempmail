@@ -39,27 +39,37 @@ def index(request):
 @csrf_exempt
 def receive_email(request):
     """
-    Simulate receiving an email by accepting a POST request.
-    For production, you would have an SMTP or webhook integration.
+    Receive an email from Mailgun's inbound route.
+    Expected POST parameters from Mailgun:
+      - recipient: the email address the message was sent to
+      - sender: the sender's email address
+      - subject: the email's subject
+      - body-plain: the plain text body of the email
     """
     if request.method == "POST":
-        email_address = request.POST.get('email_address')
+        # Extract parameters from Mailgun's POST data
+        recipient = request.POST.get('recipient')
         sender = request.POST.get('sender')
         subject = request.POST.get('subject')
-        body = request.POST.get('body')
-        if not all([email_address, sender, subject, body]):
-            return HttpResponseBadRequest("Missing parameters")
+        body_plain = request.POST.get('body-plain')
 
+        # Validate that all required parameters are present
+        if not all([recipient, sender, subject, body_plain]):
+            return HttpResponseBadRequest("Missing one or more required parameters.")
+
+        # Look up the EmailAccount that matches the recipient address
         try:
-            email_account = EmailAccount.objects.get(email_address=email_address)
+            email_account = EmailAccount.objects.get(email_address=recipient)
         except EmailAccount.DoesNotExist:
-            return HttpResponseBadRequest("Email address does not exist")
+            return HttpResponseBadRequest("Email address does not exist.")
 
+        # Create a new EmailMessage record with the incoming data
         EmailMessage.objects.create(
             email_account=email_account,
             sender=sender,
             subject=subject,
-            body=body
+            body=body_plain
         )
+
         return JsonResponse({"status": "success"})
     return HttpResponseBadRequest("Only POST method allowed")
